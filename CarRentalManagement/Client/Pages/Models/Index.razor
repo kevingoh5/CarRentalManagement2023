@@ -1,0 +1,71 @@
+﻿@using CarRentalManagement.Shared.Domain
+
+@page "/models/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">Car models</h3>
+@if (models == null)
+{
+    <div class="alert alert-info">Loading models...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var make in models)
+            {
+                <tr>
+                    <td>@make.Name</td>
+                    <td>
+                        <a href="models/view/@make.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="models/edit/@make.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="(() => Delete(make.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Make>? models;
+
+    protected override async Task OnInitializedAsync()
+    {
+        models = await _client.GetFromJsonAsync<List<Make>>($"{Endpoints.ModelsEndpoint}");
+    }
+
+    async Task Delete(int makeId)
+    {
+        if (models != null)
+        {
+            var make = models.FirstOrDefault(q => q.Id == makeId);
+            if (make != null)
+            {
+                var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {make.Name}?");
+                if (confirm)
+                {
+                    await _client.DeleteAsync($"{Endpoints.ModelsEndpoint}/{makeId}");
+                    models.Remove(make);
+                    StateHasChanged(); // Notify the component to refresh the UI
+                }
+            }
+        }
+    }
+}
+

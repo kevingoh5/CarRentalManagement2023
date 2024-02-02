@@ -1,0 +1,61 @@
+﻿@using CarRentalManagement.Shared.Domain
+
+@page "/vehicles/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">Car Vehicles</h3>
+@if (vehicles == null)
+{
+    <div class="alert alert-info">Loading vehicles...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>License Plate</th> <!-- Added column header for License Plate Number -->
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vehicle in vehicles)
+            {
+                <tr>
+                    <td>@vehicle.Make.Name</td>
+                    <td>@vehicle.Model.Name</td>
+                    <td>@vehicle.Year</td>
+                    <td>@vehicle.LicensePlateNumber</td> <!-- Ensure this matches your Vehicle model -->
+                    <td>
+                        <!-- Action buttons -->
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Vehicle>? vehicles; // Holds the fetched vehicles
+
+    protected override async Task OnInitializedAsync()
+    {
+        vehicles = await _client.GetFromJsonAsync<List<Vehicle>>(Endpoints.VehiclesEndpoint);
+    }
+
+    // Assuming this is triggered by some UI event, e.g., a button click
+    public async Task DeleteVehicleAsync(Vehicle vehicle)
+    {
+        var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {vehicle.LicensePlateNumber}?");
+        if (confirm)
+        {
+            // Add your deletion logic here
+            // e.g., await _client.DeleteAsync($"{Endpoints.VehiclesEndpoint}/{vehicle.Id}");
+            // And then optionally remove the vehicle from the `vehicles` list or refresh the list
+        }
+    }
+}
